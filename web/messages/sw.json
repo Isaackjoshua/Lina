@@ -1,0 +1,33 @@
+{
+  "site": {
+    "tagline": "Fursa zote mahali pamoja",
+    "description": "Kazi, mafunzo kwa vitendo, ufadhili wa masomo, fellowship, hackathon na fursa nyingine zilizothibitishwa kwa vijana wa Tanzania — kwa Kiswahili na Kiingereza.",
+    "free": "Bure kwa watafuta fursa, siku zote."
+  },
+  "home": {
+    "comingSoon": "Tunajenga. Fursa za kwanza zinakuja hivi karibuni.",
+    "categories": "Aina za fursa"
+  },
+  "types": {
+    "job": "Kazi",
+    "internship": "Mafunzo kwa vitendo",
+    "scholarship": "Ufadhili wa masomo",
+    "fellowship": "Fellowship",
+    "hackathon": "Hackathon",
+    "grant": "Ruzuku",
+    "conference": "Mikutano",
+    "competition": "Mashindano",
+    "training": "Mafunzo"
+  },
+  "common": {
+    "notSpecified": "Haijabainishwa",
+    "closed": "Imefungwa",
+    "sponsored": "Imedhaminiwa",
+    "switchLanguage": "English",
+    "home": "Mwanzo"
+  },
+  "notFound": {
+    "title": "Ukurasa haujapatikana",
+    "back": "Rudi mwanzo"
+  }
+}

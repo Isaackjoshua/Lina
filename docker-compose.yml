@@ -1,0 +1,77 @@
+# LINA — local and single-VPS stack. A reverse proxy with HTTPS is added in M8.
+# Start everything:  docker compose up --build
+name: lina
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lina
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lina}
+      POSTGRES_DB: lina
+      TZ: Africa/Dar_es_Salaam
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # Host port 5433, bound to localhost only, so it cannot clash with a local Postgres on 5432.
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lina -d lina"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    # Applies pending migrations, then serves the API.
+    command: sh -c "alembic upgrade head && uvicorn lina.api.main:app --host 0.0.0.0 --port 8000"
+    environment: &backend-env
+      DATABASE_URL: postgresql+psycopg://lina:${POSTGRES_PASSWORD:-lina}@db:5432/lina
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN in .env}
+      TIMEZONE: Africa/Dar_es_Salaam
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-sw}
+      TZ: Africa/Dar_es_Salaam
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    command: python -m lina.worker
+    environment: *backend-env
+    depends_on:
+      api:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    environment:
+      SITE_URL: ${SITE_URL:-http://localhost:3000}
+      API_INTERNAL_URL: http://api:8000
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN in .env}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+      AUTH_URL: ${SITE_URL:-http://localhost:3000}
+      AUTH_TRUST_HOST: "true"
+      AUTH_GITHUB_ID: ${AUTH_GITHUB_ID:-}
+      AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET:-}
+      ADMIN_GITHUB_USERNAME: ${ADMIN_GITHUB_USERNAME:-}
+      TZ: Africa/Dar_es_Salaam
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  db-data:

@@ -1,0 +1,33 @@
+{
+  "site": {
+    "tagline": "Every opportunity in one place",
+    "description": "Verified jobs, internships, scholarships, fellowships, hackathons and more for young people in Tanzania — in Swahili and English.",
+    "free": "Free for opportunity seekers, always."
+  },
+  "home": {
+    "comingSoon": "We're building. The first listings are coming soon.",
+    "categories": "Types of opportunity"
+  },
+  "types": {
+    "job": "Jobs",
+    "internship": "Internships",
+    "scholarship": "Scholarships",
+    "fellowship": "Fellowships",
+    "hackathon": "Hackathons",
+    "grant": "Grants",
+    "conference": "Conferences",
+    "competition": "Competitions",
+    "training": "Trainings"
+  },
+  "common": {
+    "notSpecified": "Not specified",
+    "closed": "Closed",
+    "sponsored": "Sponsored",
+    "switchLanguage": "Kiswahili",
+    "home": "Home"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "back": "Back to home"
+  }
+}

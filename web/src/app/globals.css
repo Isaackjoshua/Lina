@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/*
+ * LINA palette (proposed 2026-11-15, change here only).
+ * Light theme only for now: one small stylesheet, predictable on cheap phones.
+ * System fonts: zero font bytes to download.
+ */
+@theme {
+  --color-brand: #0e5a4a; /* deep green: headers, links, buttons */
+  --color-brand-dark: #093d33;
+  --color-accent: #f4b41a; /* amber: deadlines, highlights */
+  --color-ink: #14211d; /* body text */
+  --color-muted: #55645f; /* secondary text */
+  --color-paper: #faf8f3; /* page background */
+  --color-line: #e3ded2; /* borders */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
