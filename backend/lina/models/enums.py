@@ -123,3 +123,10 @@ class SocialPostStatus(StrEnum):
     EXPORTED = "exported"
     PUBLISHED = "published"
     FAILED = "failed"
+
+
+class RawItemStatus(StrEnum):
+    NEW = "new"  # fetched, waiting for extraction
+    PROCESSED = "processed"  # extraction done; html has been purged
+    SKIPPED = "skipped"  # duplicate content or not an opportunity
+    FAILED = "failed"

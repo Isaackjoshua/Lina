@@ -5,19 +5,23 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.1",
     "apscheduler>=3.11.3",
+    "beautifulsoup4>=4.15.0",
     "fastapi>=0.163.1",
+    "feedparser>=6.0.14",
+    "httpx2>=2.16.0",
     "psycopg[binary]>=3.3.9",
     "pydantic-settings>=2.16.3",
+    "pyyaml>=6.0.3",
     "sqlalchemy>=2.1.8",
     "uvicorn[standard]>=0.54.0",
 ]
 
 [dependency-groups]
 dev = [
-    "httpx2>=2.16.0",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "ruff>=0.17.5",
+    "types-pyyaml>=6.0.12.20261113",
 ]
 
 [tool.pytest.ini_options]
@@ -38,7 +42,7 @@ strict = true
 files = ["lina", "tests"]
 
 [[tool.mypy.overrides]]
-module = ["apscheduler.*"]
+module = ["apscheduler.*", "feedparser.*"]
 ignore_missing_imports = true
 
 [tool.ruff.lint.isort]

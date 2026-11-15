@@ -15,6 +15,7 @@ def test_all_spec_tables_exist() -> None:
         "social_posts",
         "social_post_items",
         "outbound_clicks",
+        "raw_items",
     }
 
 

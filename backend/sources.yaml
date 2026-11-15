@@ -1,0 +1,240 @@
+# Official sources LINA fetches from (SPEC §6.1).
+#
+# How this file works
+#   - Edit here, then run:  uv run python -m lina.pipeline sync
+#   - Nothing is fetched from a source until it has `verified: true`. Only the owner sets that,
+#     after reading the site's terms of use and checking that the listing URL is the right page.
+#   - `uv run python -m lina.pipeline check --probe` checks each site's robots.txt and whether the
+#     listing loads. Results are stored in the database, not written back here.
+#   - Removing an entry switches the source off; its history stays in the database.
+#
+# Fields
+#   key              permanent id (lowercase-with-dashes). Never rename.
+#   kind             rss | html_list | sitemap | manual
+#   default_type     the opportunity type most items here have (optional)
+#   country          ISO code if the source is national; omit for international programmes
+#   fetch_frequency  daily (default) | weekly
+#   parsing_hints    item_selector (CSS selector for the item links), url_pattern (regex),
+#                    allowed_domains (other official domains items may live on), max_items
+#
+# Only official pages belong here: the organization's own site or an official portal.
+# No job boards, opportunity blogs or LinkedIn (SPEC §2).
+#
+# Every entry below is a PROPOSAL. Each site's robots.txt was checked and its page loaded once
+# on 2026-11-15 (see the notes). Terms of use were NOT read; that is part of verifying a source.
+
+sources:
+  # --- Tanzanian government ---------------------------------------------------
+  - key: psrs-ajira
+    name: Public Service Recruitment Secretariat (Ajira Portal)
+    url: https://www.ajira.go.tz/
+    kind: html_list
+    default_type: job
+    country: TZ
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; the page loads but has no links in its HTML (built by JavaScript). Needs a different listing URL or a data endpoint before it can be used.
+
+  - key: heslb
+    name: Higher Education Students' Loans Board (HESLB)
+    url: https://www.heslb.go.tz/
+    kind: html_list
+    default_type: scholarship
+    country: TZ
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; home page loads (58 links). Point `url` at the news/announcements page and add an item_selector.
+
+  - key: costech
+    name: Tanzania Commission for Science and Technology (COSTECH)
+    url: https://www.costech.or.tz/
+    kind: html_list
+    default_type: grant
+    country: TZ
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; the page loads but has no links in its HTML (built by JavaScript). Needs a different listing URL.
+
+  - key: moe-scholarships
+    name: Ministry of Education, Science and Technology
+    url: https://www.moe.go.tz/sw
+    kind: html_list
+    default_type: scholarship
+    country: TZ
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; redirects to /sw. Point `url` at the scholarships/announcements page.
+
+  - key: tcu
+    name: Tanzania Commission for Universities (TCU)
+    url: https://www.tcu.go.tz/
+    kind: html_list
+    default_type: scholarship
+    country: TZ
+    fetch_frequency: weekly
+    active: false
+    notes: >-
+      Checked 2026-11-15: robots.txt could not be read or disallows fetching, so this source is switched off. Check by hand before enabling.
+
+  # --- Tanzanian universities -------------------------------------------------
+
+  - key: udsm
+    name: University of Dar es Salaam (UDSM)
+    url: https://www.udsm.ac.tz/
+    kind: html_list
+    country: TZ
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; home page loads (320 links). Point `url` at the announcements page and add an item_selector.
+
+  - key: muhas
+    name: Muhimbili University of Health and Allied Sciences (MUHAS)
+    url: https://muhas.ac.tz/
+    kind: html_list
+    country: TZ
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; home page loads. The site advertises an RSS feed at https://muhas.ac.tz/feed/ — consider kind: rss.
+
+  - key: udom
+    name: University of Dodoma (UDOM)
+    url: https://www.udom.ac.tz/
+    kind: html_list
+    country: TZ
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; home page loads (104 links). Point `url` at the announcements page.
+
+  - key: sua
+    name: Sokoine University of Agriculture (SUA)
+    url: https://www.sua.ac.tz/
+    kind: html_list
+    country: TZ
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; home page loads (222 links). Point `url` at the announcements page.
+
+  - key: nm-aist
+    name: Nelson Mandela African Institution of Science and Technology (NM-AIST)
+    url: https://nm-aist.ac.tz/
+    kind: html_list
+    country: TZ
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; home page loads (60 links). Point `url` at the announcements/vacancies page.
+
+  # --- Embassies in Dar es Salaam ----------------------------------------------
+
+  - key: us-embassy-tz
+    name: U.S. Embassy in Tanzania (Fulbright and exchange programmes)
+    url: https://tz.usembassy.gov/education/
+    kind: html_list
+    default_type: scholarship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads. The site advertises an RSS feed at https://tz.usembassy.gov/feed/ — consider kind: rss.
+
+  - key: japan-embassy-tz
+    name: Embassy of Japan in Tanzania (MEXT scholarships)
+    url: https://www.tz.emb-japan.go.jp/itprtop_en/index.html
+    kind: html_list
+    default_type: scholarship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads (20 links). Find the scholarship page and point `url` at it.
+
+  # --- International scholarship programmes -------------------------------------
+
+  - key: chevening
+    name: Chevening Scholarships (Tanzania)
+    url: https://www.chevening.org/scholarship/tanzania/
+    kind: html_list
+    default_type: scholarship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads (39 links). One programme page, not a list: probably best as a single item with a url_pattern.
+
+  - key: commonwealth
+    name: Commonwealth Scholarship Commission (UK)
+    url: https://cscuk.fcdo.gov.uk/scholarships/
+    kind: html_list
+    default_type: scholarship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads. The site advertises an RSS feed at https://cscuk.fcdo.gov.uk/scholarships/feed/ — consider kind: rss.
+
+  - key: daad
+    name: DAAD (German Academic Exchange Service)
+    url: https://www.daad.de/en/studying-in-germany/scholarships/
+    kind: html_list
+    default_type: scholarship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads (29 links). The scholarship database itself is a search tool; needs hints.
+
+  - key: erasmus-mundus
+    name: Erasmus Mundus Joint Masters (European Commission)
+    url: https://erasmus-plus.ec.europa.eu/opportunities/individuals/students/erasmus-mundus-joint-masters
+    kind: html_list
+    default_type: scholarship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads (36 links). The old /opportunities-for-individuals/ address redirects here.
+
+  - key: mastercard-scholars
+    name: Mastercard Foundation Scholars Program
+    url: https://mastercardfdn.org/en/what-we-do/our-programs/mastercard-foundation-scholars-program/
+    kind: html_list
+    default_type: scholarship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads (106 links). Applications go through partner universities, so items may link off this domain; add allowed_domains as needed.
+
+  - key: mandela-rhodes
+    name: Mandela Rhodes Foundation Scholarship
+    url: https://www.mandelarhodes.org/scholarship/
+    kind: html_list
+    default_type: scholarship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads (25 links).
+
+  # --- Fellowships and grants ----------------------------------------------------
+
+  - key: mandela-washington
+    name: Mandela Washington Fellowship (YALI)
+    url: https://www.mandelawashingtonfellowship.org/
+    kind: html_list
+    default_type: fellowship
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads. The site advertises an RSS feed at https://www.mandelawashingtonfellowship.org/feed/ — consider kind: rss.
+
+  - key: tony-elumelu
+    name: Tony Elumelu Foundation Entrepreneurship Programme
+    url: https://www.tonyelumelufoundation.org/
+    kind: html_list
+    default_type: grant
+    fetch_frequency: weekly
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads. The site advertises an RSS feed at https://www.tonyelumelufoundation.org/feed — consider kind: rss.
+
+  # --- UN and international organisations ----------------------------------------
+
+  - key: un-careers
+    name: United Nations Careers
+    url: https://careers.un.org/
+    kind: html_list
+    default_type: job
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; the page loads but has no links in its HTML (built by JavaScript). Needs a data endpoint or a Tanzania-filtered listing URL.
+
+  - key: unicef-jobs
+    name: UNICEF Careers
+    url: https://jobs.unicef.org/jobs/search
+    kind: html_list
+    default_type: job
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; page loads (43 links). Needs a Tanzania filter in the URL.
+
+  # --- Competitions and hackathons -------------------------------------------------
+
+  - key: zindi
+    name: Zindi (data science competitions for Africa)
+    url: https://zindi.world/competitions
+    kind: html_list
+    default_type: competition
+    notes: >-
+      Checked 2026-11-15: robots.txt allows; zindi.africa now redirects to zindi.world. The list is built by JavaScript (1 link in the HTML). Needs a data endpoint.

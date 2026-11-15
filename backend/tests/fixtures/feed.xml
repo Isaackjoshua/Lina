@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Example Agency — Calls</title>
+    <link>https://example-agency.go.tz/calls</link>
+    <description>Open calls</description>
+    <item>
+      <title>Research Grants Call 2027</title>
+      <link>https://example-agency.go.tz/calls/research-grants-2027?utm_medium=rss</link>
+      <pubDate>Mon, 09 Nov 2026 08:00:00 +0300</pubDate>
+    </item>
+    <item>
+      <title>Young Innovators Competition</title>
+      <link>https://example-agency.go.tz/calls/young-innovators</link>
+      <pubDate>Tue, 10 Nov 2026 09:30:00 +0300</pubDate>
+    </item>
+    <item>
+      <title>Partner event (other site)</title>
+      <link>https://partner.example.org/event</link>
+    </item>
+  </channel>
+</rss>

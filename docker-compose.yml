@@ -32,6 +32,9 @@ services:
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN in .env}
       TIMEZONE: Africa/Dar_es_Salaam
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-sw}
+      BOT_CONTACT_URL: ${BOT_CONTACT_URL:-}
+      FETCH_DELAY_SECONDS: ${FETCH_DELAY_SECONDS:-5}
+      MAX_ITEMS_PER_RUN: ${MAX_ITEMS_PER_RUN:-60}
       TZ: Africa/Dar_es_Salaam
     depends_on:
       db:

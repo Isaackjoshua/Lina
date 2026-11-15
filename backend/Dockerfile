@@ -13,7 +13,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
-COPY alembic.ini ./
+COPY alembic.ini sources.yaml ./
 COPY alembic ./alembic
 COPY lina ./lina
 

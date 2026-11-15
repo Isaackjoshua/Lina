@@ -3,8 +3,8 @@
 A free, bilingual (Swahili + English) site that publishes verified opportunities for young
 people in Tanzania. The full product spec is in [SPEC.md](SPEC.md).
 
-**Status:** Milestone 1 (scaffold). A placeholder site in two languages, an admin login, the
-database schema, and CI. No listings yet.
+**Status:** Milestone 2 (sources and fetching). The site is still a placeholder. The pipeline can
+fetch pages from verified sources and store them; it does not yet read them (that is Milestone 3).
 
 ## What is in the repo
 
@@ -13,6 +13,7 @@ database schema, and CI. No listings yet.
 | `backend/` | Python: FastAPI API, scheduled worker, database models and migrations |
 | `web/` | Next.js: public site (`/sw`, `/en`) and the admin (`/admin`) |
 | `docker-compose.yml` | Runs the database, API, worker and website together |
+| `backend/sources.yaml` | The list of official sources |
 | `.env.example` | Every environment variable, with instructions |
 
 ## Run it
@@ -60,6 +61,9 @@ set -a && . ../.env && set +a && npm run dev  # site on :3000
 | `AUTH_SECRET` | web | Signs the admin session cookie |
 | `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` | web | GitHub OAuth app |
 | `ADMIN_GITHUB_USERNAME` | web | The one GitHub account allowed into `/admin` |
+| `BOT_CONTACT_URL` | backend | Public page saying who runs the bot. Sent with every request; fetching refuses to run without it |
+| `FETCH_DELAY_SECONDS` | backend | Minimum gap between two requests to the same site (default 5) |
+| `MAX_ITEMS_PER_RUN` | backend | Most detail pages fetched in one run (default 60) |
 
 Secrets live in `.env` only. It is git-ignored; never commit it.
 
@@ -85,6 +89,42 @@ uv run alembic upgrade head
 
 The API container applies pending migrations each time it starts.
 
+## How the pipeline works (so far)
+
+Commands run from `backend/` (or inside Docker: `docker compose run --rm api python -m lina.pipeline <command>`).
+
+| Command | What it does |
+| --- | --- |
+| `uv run python -m lina.pipeline sync` | Copies `sources.yaml` into the database |
+| `uv run python -m lina.pipeline check --probe` | Checks every source's robots.txt and loads each allowed listing once |
+| `uv run python -m lina.pipeline fetch` | The dry run: fetches verified sources, stores new pages as raw items, prints a report |
+| `uv run python -m lina.pipeline fetch --source udsm` | Same, for one source |
+
+What a fetch does, per source: load the listing (RSS feed, HTML list page or sitemap), collect
+the item links that stay on the official site, skip pages already stored, fetch the new ones,
+and save them in `raw_items`. Every run is logged in `pipeline_runs`.
+
+Politeness rules, enforced in one place (`backend/lina/pipeline/http.py`):
+
+- identifies itself with `BOT_CONTACT_URL`, and will not run without it
+- obeys robots.txt; if robots.txt cannot be read, the site is treated as off limits
+- waits `FETCH_DELAY_SECONDS` between requests to one site, or longer if the site asks
+- asks "has this changed?" before re-downloading a listing
+- retries failed requests up to three times with growing waits
+- a source that fails three runs in a row is flagged in the report
+
+A source is only fetched when it is `active`, has `verified: true`, and its robots.txt allows it.
+
+## Adding or verifying a source
+
+1. Add or edit the entry in `backend/sources.yaml` (the file explains each field).
+2. Only official pages: the organization's own site or an official portal. No job boards.
+3. Read the site's terms of use. Point `url` at the page that lists the opportunities.
+4. Run `check --probe --source <key>`. It reports robots.txt, whether the page loads, how many
+   links it found, and any RSS feed the site advertises (prefer `kind: rss` when there is one).
+5. If it finds too many or the wrong links, add `parsing_hints` (`item_selector`, `url_pattern`).
+6. Set `verified: true`, then run `fetch --source <key>` and read the report.
+
 ## Privacy note
 
 Subscriber emails will be stored on a VPS outside Tanzania and sent through an email provider
@@ -99,5 +139,5 @@ outside Tanzania. Under the Personal Data Protection Act, 2022 that is a cross-b
 - [ ] Final privacy policy and terms text in Swahili and English
 - [ ] Confirm the cross-border transfer basis for subscriber data
 
-Sections on the pipeline, the daily routine, deploy, backups, adding a source and rotating
-tokens are added in the milestones that build those parts.
+Sections on the daily routine, deploy, backups and rotating tokens are added in the milestones
+that build those parts.

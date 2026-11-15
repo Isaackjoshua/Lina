@@ -16,6 +16,9 @@ Build one §12 milestone at a time and stop for review after each.
 Backend (run from `backend/`):
 - `uv run pytest -q` · `uv run ruff check .` · `uv run ruff format .` · `uv run mypy`
 - `uv run uvicorn lina.api.main:app --reload` (needs `docker compose up -d db`)
+- Pipeline: `uv run python -m lina.pipeline sync | check [--probe] | fetch [--source KEY]`
+- Tests marked by the `session` fixture use a throwaway `lina_test` database on the local
+  Postgres and are skipped when it is not running (they must run in CI).
 - New migration: `uv run alembic revision --autogenerate -m "what changed"`, read the file, then
   `uv run alembic upgrade head` and `uv run alembic check`.
 
@@ -37,7 +40,14 @@ Everything: `docker compose up --build` (db is on host port 5433, not 5432).
 - Public pages are server-rendered with as little client JavaScript as possible. A new
   `"use client"` component needs a reason.
 - Timezone is `Africa/Dar_es_Salaam` everywhere.
-- Tests never touch the network. Scraping tests use saved HTML fixtures.
+- Tests never touch the network. Scraping tests use saved HTML fixtures (`backend/tests/fixtures`)
+  and the `FakeWeb` helper in `backend/tests/conftest.py`.
+- All outbound HTTP for the pipeline goes through `PoliteClient` (`backend/lina/pipeline/http.py`).
+  Never call an HTTP library directly from pipeline code.
+- Sources: `backend/sources.yaml` is the source of truth until the admin sources page exists (M4).
+  New sources are `verified: false`; only the owner sets `verified: true`. Never fetch from an
+  unverified source on the owner's behalf.
+- `raw_items.html` is working material and is cleared after extraction (copyright, SPEC §2).
 - Brand placeholders (`[DOMAIN]`, `[INSTAGRAM_HANDLE]`) live only in `web/src/lib/site.ts`.
 - Next.js 16 differs from older versions (see `web/AGENTS.md`): `proxy.ts` replaces
   `middleware.ts`, Cache Components are on, and anything reading the session or request must sit
@@ -65,7 +75,17 @@ Everything: `docker compose up --build` (db is on host port 5433, not 5432).
 - 2026-11-15 — Email: Resend, behind an adapter (M6). Pricing not yet verified.
 - 2026-11-15 — Hosting: Hetzner VPS, nightly backups to Backblaze B2 (M8).
 - 2026-11-15 — Analytics: none for now. `OutboundClick` is the impact metric.
+- 2026-11-15 — HTTP via `httpx2` (the maintained successor Starlette's test client asks for),
+  feeds via `feedparser`, HTML via `beautifulsoup4` with the built-in parser (no lxml).
+- 2026-11-15 — Added a `raw_items` table (not in SPEC §5) to hold fetched pages between fetch
+  and extraction, and `robots_allowed`, `etag`, `last_modified` on `sources`.
+- 2026-11-15 — The 04:00 pipeline job is not scheduled in the worker yet; it is added in M3 when
+  the pipeline does something useful end to end.
+- 2026-11-15 — JavaScript-only source pages (Ajira, COSTECH, UN Careers, Zindi) cannot be read by
+  the fetcher. No headless browser for now; look for a feed or data endpoint per source first.
 
 ## Milestones
 
-- M1 Scaffold — built 2026-11-15, awaiting owner review.
+- M1 Scaffold — built 2026-11-15. Open item: owner to implement `isAllowedAdmin` in
+  `web/src/lib/admin.ts` (marked TODO(human)); admin login is closed until then.
+- M2 Sources & fetching — built 2026-11-15, awaiting owner review. No source is verified yet.

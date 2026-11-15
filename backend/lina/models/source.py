@@ -30,4 +30,9 @@ class Source(Base, TimestampMixin):
     last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     consecutive_failures: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     robots_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Result of the last robots.txt check for `url`. NULL = never checked.
+    robots_allowed: Mapped[bool | None] = mapped_column(Boolean)
+    # Validators from the last successful fetch of `url`, for conditional requests.
+    etag: Mapped[str | None] = mapped_column(String(512))
+    last_modified: Mapped[str | None] = mapped_column(String(64))
     notes: Mapped[str | None] = mapped_column(Text)
