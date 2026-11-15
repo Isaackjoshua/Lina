@@ -19,7 +19,21 @@ describe("isAllowedAdmin", () => {
     expect(isAllowedAdmin("izy2", "izy")).toBe(false);
   });
 
-  // Turn these into real tests when you implement isAllowedAdmin.
-  it.todo("accepts the configured account");
-  it.todo("decides how letter case is treated (GitHub usernames are case-insensitive)");
+  it("accepts the configured account", () => {
+    expect(isAllowedAdmin("izy", "izy")).toBe(true);
+  });
+
+  it("ignores letter case and spaces around the configured name", () => {
+    expect(isAllowedAdmin("Izy", "izy")).toBe(true);
+    expect(isAllowedAdmin("izy", " IZY ")).toBe(true);
+  });
+
+  it("does not trim the login itself, which comes from GitHub, not from a person typing", () => {
+    expect(isAllowedAdmin(" izy", "izy")).toBe(false);
+  });
+
+  it("rejects everyone when the configured name is only spaces", () => {
+    expect(isAllowedAdmin("", "   ")).toBe(false);
+    expect(isAllowedAdmin("   ", "   ")).toBe(false);
+  });
 });

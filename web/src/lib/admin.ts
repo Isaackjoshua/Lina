@@ -9,9 +9,9 @@
  * @param allowed  the value of ADMIN_GITHUB_USERNAME, if set
  */
 export function isAllowedAdmin(login: string | null | undefined, allowed: string | undefined): boolean {
-  // TODO(human): return true only for the configured admin account.
-  // Until this is implemented nobody can log in (fails closed).
-  void login;
-  void allowed;
-  return false;
+  // GitHub usernames are case-insensitive, and a stray space in .env should not lock the owner out.
+  const expected = allowed?.trim().toLowerCase();
+  // No configured admin, or no login: nobody gets in.
+  if (!expected || !login) return false;
+  return login.toLowerCase() === expected;
 }
