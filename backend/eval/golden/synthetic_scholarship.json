@@ -1,0 +1,14 @@
+{
+  "page": "synthetic_scholarship.html",
+  "source_url": "https://www.example-university.ac.tz/announcements/postgraduate-scholarships-2027",
+  "default_type": "scholarship",
+  "today": "2026-11-15",
+  "expected": {
+    "is_opportunity": true,
+    "type": "scholarship",
+    "deadline": "2026-11-30",
+    "open_to_tanzanians": "yes",
+    "funding": "fully_funded",
+    "education_levels": ["bachelor"]
+  }
+}

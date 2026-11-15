@@ -1,0 +1,40 @@
+# Swahili glossary for LINA summaries. A starting point for the owner to review and expand.
+# Passed to the extractor with every request. Keep it short: it is paid for on each call.
+#
+# Rules the extractor is given alongside this list:
+#   - Natural Tanzanian Swahili, not word-for-word translation.
+#   - Organization, programme and degree names stay in their original form.
+#   - Dates are written like "30 Novemba 2026".
+
+keep_in_english:
+  - fellowship
+  - hackathon
+
+terms:
+  deadline: tarehe ya mwisho
+  application: maombi
+  to apply: kuomba / kutuma maombi
+  applicant: mwombaji
+  scholarship: ufadhili wa masomo
+  fully funded: ufadhili kamili
+  partially funded: ufadhili wa sehemu
+  internship: mafunzo kwa vitendo
+  eligibility: vigezo / sifa
+  job: kazi / ajira
+  vacancy: nafasi ya kazi
+  grant: ruzuku
+  competition: mashindano
+  conference: mkutano
+  training: mafunzo
+  stipend: posho
+  bachelor's degree: shahada ya kwanza
+  master's degree: shahada ya uzamili
+  PhD: shahada ya uzamivu
+  diploma: stashahada
+  certificate: astashahada / cheti
+  secondary education: elimu ya sekondari
+  citizen: raia
+  not specified: haijabainishwa
+
+months:
+  [Januari, Februari, Machi, Aprili, Mei, Juni, Julai, Agosti, Septemba, Oktoba, Novemba, Desemba]

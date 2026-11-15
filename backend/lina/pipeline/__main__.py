@@ -10,7 +10,11 @@ import logging
 
 from lina.config import get_settings
 from lina.db import get_sessionmaker
+from lina.models import PipelineRun
+from lina.models.enums import RunKind, RunStatus
+from lina.pipeline.extract import ClaudeExtractor, ExtractorNotConfigured
 from lina.pipeline.http import FetchError, PoliteClient
+from lina.pipeline.process import run_extract
 from lina.pipeline.run import check_sources, format_report, run_fetch
 from lina.pipeline.sources import load_sources, sync_sources
 
@@ -24,8 +28,13 @@ def main() -> int:
     check.add_argument("--source", help="only this source key")
     fetch = commands.add_parser("fetch", help="dry run: fetch verified sources and store raw items")
     fetch.add_argument("--source", help="only this source key (ignores the weekly schedule)")
-    args = parser.parse_args()
+    run_all = commands.add_parser("run", help="fetch, then extract into the review queue")
+    run_all.add_argument("--source", help="only fetch this source key")
+    commands.add_parser("extract", help="extract raw items that are already fetched")
+    return run_command(parser.parse_args())
 
+
+def run_command(args: argparse.Namespace) -> int:
     settings = get_settings()
     logging.basicConfig(level=settings.log_level, format="%(levelname)s %(name)s %(message)s")
 
@@ -48,7 +57,21 @@ def main() -> int:
                     )
                     print(f"{row['key']:<26} {extras}\n{'':<26} {row['url']}")
                 return 0
-            run = run_fetch(session, client, settings, only=args.source)
+            if args.command == "fetch":
+                run = run_fetch(session, client, settings, only=args.source)
+            else:
+                try:
+                    extractor = ClaudeExtractor(settings.glossary_file)
+                except ExtractorNotConfigured as exc:
+                    print(f"Cannot extract: {exc}")
+                    return 2
+                if args.command == "run":
+                    run = run_fetch(session, client, settings, only=args.source, dry_run=False)
+                else:
+                    run = PipelineRun(kind=RunKind.PIPELINE.value, status=RunStatus.SUCCEEDED.value)
+                    session.add(run)
+                    session.commit()
+                run = run_extract(session, extractor, client, settings, run)
             print(format_report(session, run))
             return 0 if run.status == "succeeded" else 1
         finally:

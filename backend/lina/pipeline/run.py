@@ -47,9 +47,10 @@ def run_fetch(
     settings: Settings,
     only: str | None = None,
     now: datetime | None = None,
+    dry_run: bool = True,
 ) -> PipelineRun:
     now = now or datetime.now(UTC)
-    run = PipelineRun(kind=RunKind.PIPELINE.value, status=RunStatus.RUNNING.value, dry_run=True)
+    run = PipelineRun(kind=RunKind.PIPELINE.value, status=RunStatus.RUNNING.value, dry_run=dry_run)
     session.add(run)
     session.commit()
 
@@ -203,7 +204,7 @@ def check_sources(
 def format_report(session: Session, run: PipelineRun) -> str:
     counts = run.counts
     lines = [
-        f"Pipeline run #{run.id} (fetch only) — {run.status}",
+        f"Pipeline run #{run.id}{' (fetch only)' if run.dry_run else ''} — {run.status}",
         f"  sources: {counts.get('sources_tried', 0)} tried, {counts.get('sources_ok', 0)} ok, "
         f"{counts.get('sources_failed', 0)} failed, "
         f"{counts.get('sources_not_modified', 0)} unchanged, "
@@ -216,9 +217,23 @@ def format_report(session: Session, run: PipelineRun) -> str:
         f"{counts.get('off_site', 0)} redirected off the official site, "
         f"{counts.get('item_errors', 0)} page errors",
     ]
+    if not run.dry_run:
+        lines += [
+            f"  review:  {counts.get('queued', 0)} new candidates for review, "
+            f"{counts.get('duplicates_merged', 0)} merged into existing listings, "
+            f"{counts.get('rejected_fee', 0)} auto-rejected (asked for money)",
+            f"  dropped: {counts.get('skipped_prefilter', 0)} not opportunity pages (free check), "
+            f"{counts.get('skipped_not_opportunity', 0)} not opportunities (model), "
+            f"{counts.get('skipped_deadline_passed', 0)} deadline passed, "
+            f"{counts.get('extraction_failed', 0)} failed, "
+            f"{counts.get('extraction_retry', 0)} to retry, "
+            f"{counts.get('waiting_spend_cap', 0)} waiting (spend cap)",
+            f"  cost:    {run.input_tokens} input + {run.output_tokens} output tokens, "
+            f"about ${run.estimated_cost_usd:.4f}",
+        ]
     if run.errors:
         lines.append("  errors:")
-        lines += [f"    [{e['source']}] {e['error']}" for e in run.errors]
+        lines += [f"    [{e.get('source', '-')}] {e.get('error')}" for e in run.errors]
     flagged = session.scalars(
         select(Source)
         .where(Source.consecutive_failures >= FAILURES_BEFORE_FLAG, Source.active.is_(True))
@@ -227,6 +242,6 @@ def format_report(session: Session, run: PipelineRun) -> str:
     if flagged:
         lines.append("  FLAGGED sources (3 or more failures in a row):")
         lines += [f"    {s.key}: {s.consecutive_failures} failures" for s in flagged]
-    if not counts.get("sources_tried"):
+    if run.dry_run and not counts.get("sources_tried"):
         lines.append("  No source was fetched. Sources need `verified: true` in sources.yaml.")
     return "\n".join(lines)

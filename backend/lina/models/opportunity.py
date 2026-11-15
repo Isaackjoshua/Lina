@@ -73,6 +73,12 @@ class Opportunity(Base):
     scam_flags: Mapped[list[str]] = mapped_column(
         ARRAY(String(64)), default=list, server_default="{}"
     )
+    # Why a human should look closely, e.g. "evidence_deadline_failed". Set by validation.
+    review_flags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(64)), default=list, server_default="{}"
+    )
+    # The model's one-line scam risk assessment, for the reviewer. Never published.
+    risk_note: Mapped[str | None] = mapped_column(Text)
     report_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     status: Mapped[str] = enum_column(OpportunityStatus, OpportunityStatus.NEEDS_REVIEW)

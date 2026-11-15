@@ -3,8 +3,9 @@
 A free, bilingual (Swahili + English) site that publishes verified opportunities for young
 people in Tanzania. The full product spec is in [SPEC.md](SPEC.md).
 
-**Status:** Milestone 2 (sources and fetching). The site is still a placeholder. The pipeline can
-fetch pages from verified sources and store them; it does not yet read them (that is Milestone 3).
+**Status:** Milestone 3 (extraction and quality gates). The site is still a placeholder. The
+pipeline fetches verified sources, reads each page with Claude, checks the result, and leaves
+candidates in the database for review. The review screen is Milestone 4.
 
 ## What is in the repo
 
@@ -14,6 +15,8 @@ fetch pages from verified sources and store them; it does not yet read them (tha
 | `web/` | Next.js: public site (`/sw`, `/en`) and the admin (`/admin`) |
 | `docker-compose.yml` | Runs the database, API, worker and website together |
 | `backend/sources.yaml` | The list of official sources |
+| `backend/content/glossary.yaml` | Swahili terms given to the extractor. Yours to review and expand |
+| `backend/eval/golden/` | Hand-checked pages for measuring extraction accuracy |
 | `.env.example` | Every environment variable, with instructions |
 
 ## Run it
@@ -63,7 +66,11 @@ set -a && . ../.env && set +a && npm run dev  # site on :3000
 | `ADMIN_GITHUB_USERNAME` | web | The one GitHub account allowed into `/admin` |
 | `BOT_CONTACT_URL` | backend | Public page saying who runs the bot. Sent with every request; fetching refuses to run without it |
 | `FETCH_DELAY_SECONDS` | backend | Minimum gap between two requests to the same site (default 5) |
-| `MAX_ITEMS_PER_RUN` | backend | Most detail pages fetched in one run (default 60) |
+| `MAX_ITEMS_PER_RUN` | backend | Most pages fetched, and most extracted, in one run (default 60) |
+| `ANTHROPIC_API_KEY` | backend | Claude API key. Extraction refuses to run without it |
+| `EXTRACT_MODEL` | backend | Model that reads pages (default `claude-haiku-5-5`) |
+| `REVIEW_MODEL` | backend | Second-opinion model for shaky answers (default `claude-sonnet-5-5`) |
+| `MAX_DAILY_LLM_USD` | backend | Daily spend cap for extraction, estimated (default 2) |
 
 Secrets live in `.env` only. It is git-ignored; never commit it.
 
@@ -89,7 +96,7 @@ uv run alembic upgrade head
 
 The API container applies pending migrations each time it starts.
 
-## How the pipeline works (so far)
+## How the pipeline works
 
 Commands run from `backend/` (or inside Docker: `docker compose run --rm api python -m lina.pipeline <command>`).
 
@@ -99,6 +106,9 @@ Commands run from `backend/` (or inside Docker: `docker compose run --rm api pyt
 | `uv run python -m lina.pipeline check --probe` | Checks every source's robots.txt and loads each allowed listing once |
 | `uv run python -m lina.pipeline fetch` | The dry run: fetches verified sources, stores new pages as raw items, prints a report |
 | `uv run python -m lina.pipeline fetch --source udsm` | Same, for one source |
+| `uv run python -m lina.pipeline run` | The daily pipeline: fetch, then extract into the review queue. The worker runs this at 04:00 EAT |
+| `uv run python -m lina.pipeline extract` | Only the extraction step, on pages already fetched |
+| `uv run python -m lina.eval` | Measures extraction accuracy on the golden set (calls the API, costs a few cents) |
 
 What a fetch does, per source: load the listing (RSS feed, HTML list page or sitemap), collect
 the item links that stay on the official site, skip pages already stored, fetch the new ones,
@@ -114,6 +124,45 @@ Politeness rules, enforced in one place (`backend/lina/pipeline/http.py`):
 - a source that fails three runs in a row is flagged in the report
 
 A source is only fetched when it is `active`, has `verified: true`, and its robots.txt allows it.
+
+### From page to review candidate
+
+Each fetched page goes through these steps. Nothing is published by any of them; everything
+ends as `needs_review` or `rejected`.
+
+1. **Clean** the page to its main text. A free check drops pages that are clearly not
+   opportunities (news, stubs) before any money is spent.
+2. **Extract** with Claude (`EXTRACT_MODEL`): type, titles and summaries in both languages,
+   deadline, eligibility, funding and so on, plus the exact sentence it took the deadline and
+   eligibility from, and a confidence score per key field.
+3. **Check the evidence.** Code looks for each quoted sentence in the page. If it is not there,
+   the field is blanked and the item is flagged. "Open to Tanzanians: yes" is only kept if the
+   page names Tanzania, the region, or all nationalities.
+4. **Second opinion.** If confidence is low or an evidence check failed, the page is read again
+   by `REVIEW_MODEL`, and that answer goes through the same checks.
+5. **Drop** pages that are not opportunities or whose deadline has passed.
+6. **Check the apply link**: it must load. A link that leaves the official site is kept but flagged.
+7. **Scam rules**: fees, personal email or WhatsApp-only contact, guarantees, pressure, requests
+   for ID or bank details, organization not matching the site. **Any request for money rejects
+   the listing automatically**, with the offending sentence saved as the reason.
+8. **Dedupe**: the same page, the same organization + title + deadline, or a near-identical title
+   is merged into the existing candidate. A listing you have already approved or rejected is
+   never changed by a later run.
+
+The raw page is deleted as soon as it is processed. The cleaned text is kept only until the
+listing is reviewed.
+
+**Cost control.** A run handles at most `MAX_ITEMS_PER_RUN` pages and stops extracting once the
+day's estimated spend reaches `MAX_DAILY_LLM_USD`; the rest wait for the next run. Every run
+records tokens and estimated cost in `pipeline_runs`. The prices used for the estimate are in
+`backend/lina/pipeline/extract.py` and need updating if Anthropic changes them.
+
+### Measuring accuracy
+
+`backend/eval/golden/` holds saved pages with hand-checked answers. `uv run python -m lina.eval`
+prints accuracy per field (type, deadline, open to Tanzanians, funding, education levels) and
+lists every miss. Run it before and after changing the prompt or a model. See
+`backend/eval/golden/README.md` for how to add a case.
 
 ## Adding or verifying a source
 

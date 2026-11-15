@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     max_items_per_source: int = 10
     sources_file: str = "sources.yaml"
 
+    # --- Extraction (SPEC §4, §6.4). The API key is read by the SDK from ANTHROPIC_API_KEY. ---
+    extract_model: str = "claude-haiku-5-5"
+    review_model: str = "claude-sonnet-5-5"  # second opinion for low-confidence items only
+    review_confidence_threshold: float = 0.6
+    max_daily_llm_usd: float = 2.0
+    glossary_file: str = "content/glossary.yaml"
+
 
 @lru_cache
 def get_settings() -> Settings:

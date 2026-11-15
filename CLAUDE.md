@@ -16,7 +16,9 @@ Build one §12 milestone at a time and stop for review after each.
 Backend (run from `backend/`):
 - `uv run pytest -q` · `uv run ruff check .` · `uv run ruff format .` · `uv run mypy`
 - `uv run uvicorn lina.api.main:app --reload` (needs `docker compose up -d db`)
-- Pipeline: `uv run python -m lina.pipeline sync | check [--probe] | fetch [--source KEY]`
+- Pipeline: `uv run python -m lina.pipeline sync | check [--probe] | fetch [--source KEY] | run | extract`
+- Eval: `uv run python -m lina.eval [--model ID]` (calls the Claude API; costs money, so only
+  run it when the owner asks)
 - Tests marked by the `session` fixture use a throwaway `lina_test` database on the local
   Postgres and are skipped when it is not running (they must run in CI).
 - New migration: `uv run alembic revision --autogenerate -m "what changed"`, read the file, then
@@ -47,7 +49,13 @@ Everything: `docker compose up --build` (db is on host port 5433, not 5432).
 - Sources: `backend/sources.yaml` is the source of truth until the admin sources page exists (M4).
   New sources are `verified: false`; only the owner sets `verified: true`. Never fetch from an
   unverified source on the owner's behalf.
-- `raw_items.html` is working material and is cleared after extraction (copyright, SPEC §2).
+- `raw_items.html` is cleared as soon as an item is processed; `raw_items.text` (cleaned text) is
+  kept for the reviewer and must be cleared when the listing is approved or rejected (M4).
+- Model output is never trusted directly: everything passes `validate()` in
+  `backend/lina/pipeline/validate.py`. A failed check blanks the field and adds a review flag.
+- Claude is called only through the `Extractor` protocol (`backend/lina/pipeline/extract.py`).
+  Tests use `FakeExtractor` from `backend/tests/helpers.py`; no test calls the API.
+- The pipeline never sets `approved`. It writes `needs_review` or `rejected` only.
 - Brand placeholders (`[DOMAIN]`, `[INSTAGRAM_HANDLE]`) live only in `web/src/lib/site.ts`.
 - Next.js 16 differs from older versions (see `web/AGENTS.md`): `proxy.ts` replaces
   `middleware.ts`, Cache Components are on, and anything reading the session or request must sit
@@ -79,13 +87,28 @@ Everything: `docker compose up --build` (db is on host port 5433, not 5432).
   feeds via `feedparser`, HTML via `beautifulsoup4` with the built-in parser (no lxml).
 - 2026-11-15 — Added a `raw_items` table (not in SPEC §5) to hold fetched pages between fetch
   and extraction, and `robots_allowed`, `etag`, `last_modified` on `sources`.
-- 2026-11-15 — The 04:00 pipeline job is not scheduled in the worker yet; it is added in M3 when
-  the pipeline does something useful end to end.
 - 2026-11-15 — JavaScript-only source pages (Ajira, COSTECH, UN Careers, Zindi) cannot be read by
   the fetcher. No headless browser for now; look for a feed or data endpoint per source first.
+- 2026-11-15 — Extraction uses structured outputs (`client.messages.parse` with a Pydantic model),
+  not forced tool use as SPEC §4 says: `claude-sonnet-5-5` rejects forced `tool_choice`.
+- 2026-11-15 — No Message Batches API for now: at most 60 short pages a day on Haiku costs cents,
+  and synchronous calls keep the run and its error handling simple. Revisit if volume grows.
+- 2026-11-15 — No server-side refusal fallback on the review model. A refusal is recorded as a
+  failed item instead. Revisit if refusals ever show up in run reports.
+- 2026-11-15 — Main-text cleaning uses BeautifulSoup rules, not a dedicated library
+  (e.g. trafilatura). Revisit if the golden set shows cleaning is what loses accuracy.
+- 2026-11-15 — Added `opportunities.review_flags` and `opportunities.risk_note` (not in SPEC §5),
+  so validation flags stay separate from `scam_flags`, plus `raw_items.text` / `opportunity_id`.
+- 2026-11-15 — A duplicate only updates a listing still in `needs_review`. Approved, rejected,
+  expired and hidden listings are never changed by the pipeline.
+- 2026-11-15 — The worker runs the full pipeline at 04:00 EAT. The run-summary email comes with
+  the email adapter (M6/M8).
 
 ## Milestones
 
-- M1 Scaffold — built 2026-11-15. Open item: owner to implement `isAllowedAdmin` in
-  `web/src/lib/admin.ts` (marked TODO(human)); admin login is closed until then.
-- M2 Sources & fetching — built 2026-11-15, awaiting owner review. No source is verified yet.
+- M1 Scaffold — built 2026-11-15. GitHub login not yet tried end to end (needs the owner's
+  OAuth app).
+- M2 Sources & fetching — built 2026-11-15. No source is verified yet.
+- M3 Extraction & quality gates — built 2026-11-15, awaiting owner review. Never run against the
+  real Claude API (no key on the dev machine); the golden set holds 5 synthetic cases only.
+  Open decision for the owner: `normalize_for_evidence` in `validate.py` (marked TODO(human)).

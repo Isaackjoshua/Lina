@@ -35,6 +35,10 @@ services:
       BOT_CONTACT_URL: ${BOT_CONTACT_URL:-}
       FETCH_DELAY_SECONDS: ${FETCH_DELAY_SECONDS:-5}
       MAX_ITEMS_PER_RUN: ${MAX_ITEMS_PER_RUN:-60}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      EXTRACT_MODEL: ${EXTRACT_MODEL:-claude-haiku-5-5}
+      REVIEW_MODEL: ${REVIEW_MODEL:-claude-sonnet-5-5}
+      MAX_DAILY_LLM_USD: ${MAX_DAILY_LLM_USD:-2}
       TZ: Africa/Dar_es_Salaam
     depends_on:
       db:

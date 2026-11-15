@@ -1,0 +1,14 @@
+{
+  "page": "synthetic_hackathon.html",
+  "source_url": "https://admission.example-university.ac.tz/announcements/innovation-hackathon",
+  "default_type": null,
+  "today": "2026-11-15",
+  "expected": {
+    "is_opportunity": true,
+    "type": "hackathon",
+    "deadline": "2027-01-10",
+    "open_to_tanzanians": "unclear",
+    "funding": "unclear",
+    "education_levels": []
+  }
+}

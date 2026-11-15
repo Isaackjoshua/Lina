@@ -29,6 +29,12 @@ class RawItem(Base):
     http_status: Mapped[int] = mapped_column(Integer)
     content_hash: Mapped[str] = mapped_column(String(64), index=True)  # sha256 of visible text
     html: Mapped[str | None] = mapped_column(Text)
+    # Cleaned main text, kept after extraction so the reviewer can see the evidence in
+    # context. Cleared when the listing is approved or rejected (M4).
+    text: Mapped[str | None] = mapped_column(Text)
+    opportunity_id: Mapped[int | None] = mapped_column(
+        ForeignKey("opportunities.id", ondelete="SET NULL"), index=True
+    )
     status: Mapped[str] = enum_column(RawItemStatus, RawItemStatus.NEW)
     error: Mapped[str | None] = mapped_column(Text)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

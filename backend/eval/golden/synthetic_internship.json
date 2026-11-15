@@ -1,0 +1,14 @@
+{
+  "page": "synthetic_internship.html",
+  "source_url": "https://www.example-university.ac.tz/announcements/research-internship",
+  "default_type": null,
+  "today": "2026-11-15",
+  "expected": {
+    "is_opportunity": true,
+    "type": "internship",
+    "deadline": "2026-12-15",
+    "open_to_tanzanians": "unclear",
+    "funding": "paid",
+    "education_levels": ["bachelor"]
+  }
+}

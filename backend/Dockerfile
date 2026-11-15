@@ -15,6 +15,8 @@ RUN uv sync --frozen --no-dev
 
 COPY alembic.ini sources.yaml ./
 COPY alembic ./alembic
+COPY content ./content
+COPY eval ./eval
 COPY lina ./lina
 
 RUN useradd --system --uid 1001 lina
